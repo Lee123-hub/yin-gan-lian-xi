@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FET 复刻项目 · 方案与技术架构</title>
+<style>
+  :root{--bg:#fff;--fg:#1f2933;--muted:#647084;--line:#e3e8ef;--accent:#2b6cb0;--accent2:#1a4971;
+        --chip:#eef3f9;--good:#2f855a}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"PingFang SC","Microsoft YaHei",Segoe UI,sans-serif;
+       color:var(--fg);line-height:1.7;font-size:15px;background:var(--bg)}
+  .wrap{max-width:900px;margin:0 auto;padding:32px 22px 64px}
+  h1{font-size:24px;margin:0 0 6px;color:var(--accent2)}
+  h2{font-size:19px;margin:34px 0 12px;color:var(--accent);border-left:4px solid var(--accent);padding-left:10px}
+  h3{font-size:15px;margin:20px 0 6px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 22px}
+  .box{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:14px 0}
+  .concl{background:#eaf2fb;border:1px solid #cfe0f1;border-radius:10px;padding:16px 18px;margin:18px 0}
+  .concl b{color:var(--accent2)}
+  table{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}
+  th,td{border:1px solid var(--line);padding:9px 11px;text-align:left;vertical-align:top}
+  th{background:#eef2f7;font-weight:600}
+  code{background:#eef2f7;padding:1px 6px;border-radius:4px;font-size:12px}
+  pre{background:#0f1b2d;color:#d6e7ff;padding:14px 16px;border-radius:10px;overflow:auto;font-size:12.5px;line-height:1.5}
+  .layer{display:flex;align-items:stretch;gap:0;margin:14px 0;flex-wrap:wrap}
+  .lyr{flex:1;min-width:150px;border:1px solid var(--line);padding:12px 14px;background:#fff}
+  .lyr + .lyr{border-left:none}
+  .lyr .t{font-weight:700;color:var(--accent2);font-size:13px}
+  .lyr .d{font-size:12.5px;color:var(--muted);margin-top:4px}
+  .arrow{text-align:center;color:var(--accent);font-weight:700;padding:0 4px;align-self:center}
+  ul{margin:8px 0;padding-left:20px} li{margin:4px 0}
+  .tag{display:inline-block;font-size:12px;background:var(--chip);color:var(--accent2);
+       border:1px solid #cfe0f1;border-radius:12px;padding:2px 9px}
+  .note{background:#fffbea;border:1px solid #f6e0a0;border-radius:8px;padding:11px 13px;margin:14px 0;font-size:13.5px}
+  .footer{margin-top:38px;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:12px}
+  .free{color:var(--good);font-weight:700}
+  .pay{color:var(--warn);font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Functional Ear Trainer 免费版 · 1:1 复刻 — 方案与技术架构</h1>
+<p class="sub">项目路径：<code>~/Desktop/fet-trainer</code> ｜ 日期：2026-10-15 ｜ 形态：浏览器单页应用（本地离线可运行）</p>
+
+<div class="concl">
+<b>结论先行：</b>本项目用<b>纯前端（HTML + 原生 JS）单页应用</b> 1:1 复刻了 FET 免费版的核心训练路径——<b>“I–IV–V–I 和弦锚定调性 → 单音音级识别”</b>，覆盖 <b>大调 / 小调 / 半音（Chromatics）</b> 三大模块，并带逐级数正确率统计。音色采用上一轮调研得到的免费可商用 SF2（<b>GeneralUser GS v1.471</b>），通过 <b>FluidSynth 的 WASM 内核（已内嵌）</b> + <b>js-synthesizer</b> 在浏览器本地实时合成，<b>无需联网、无外部 CDN 依赖</b>。整套链路完全自包含，满足“下载音色 + 桌面新建项目 + 1:1 复刻”的要求。
+</div>
+
+<h2>一、方案概览</h2>
+<table>
+  <tr><th>维度</th><th>选择</th><th>理由</th></tr>
+  <tr><td>形态</td><td>浏览器单页应用（无构建步骤）</td><td>零依赖、双击即用（配本地服务器）；最适合桌面学习项目</td></tr>
+  <tr><td>训练内核</td><td>Alain Benbassat 调性功能听辨法</td><td>FET 免费版本质，1:1 对应</td></tr>
+  <tr><td>音色</td><td>GeneralUser GS v1.471.sf2（本地文件）</td><td>上一轮调研确认的免费可商用 GM 音色，含优质钢琴</td></tr>
+  <tr><td>合成引擎</td><td>FluidSynth(WASM) + js-synthesizer</td><td>浏览器内加载原始 .sf2 的标准方案；wasm 已内嵌，离线可用</td></tr>
+  <tr><td>统计</td><td>localStorage（按 音阶×标签 分区）</td><td>逐级数正确率持久化，刷新不丢</td></tr>
+</table>
+
+<h2>二、技术架构</h2>
+<div class="layer">
+  <div class="lyr"><div class="t">① 表现层 UI</div><div class="d">index.html + CSS<br>设置面板 / 训练区 / 级数按钮网格 / 统计表</div></div>
+  <div class="arrow">→</div>
+  <div class="lyr"><div class="t">② 训练逻辑层</div><div class="d">js/app.js<br>FET 方法映射、出题、判定、统计</div></div>
+  <div class="arrow">→</div>
+  <div class="lyr"><div class="t">③ 音频引擎层</div><div class="d">Audio 对象<br>SF2 加载、音符/和弦触发</div></div>
+  <div class="arrow">→</div>
+  <div class="lyr"><div class="t">④ 合成内核</div><div class="d">js-synthesizer<br>+ libfluidsynth(WASM)</div></div>
+  <div class="arrow">→</div>
+  <div class="lyr"><div class="t">⑤ 输出</div><div class="d">Web Audio<br>→ 扬声器</div></div>
+</div>
+
+<div class="box">
+<b>关键数据流（一次训练）：</b><br>
+用户点“播放” → <code>Audio.init()</code>（建 AudioContext、等 WASM 就绪、<code>loadSFont(SF2)</code>）→ <code>newRound()</code> 随机主音 T 与目標偏移 → <code>playSequence()</code> 依次播放 <code>I–IV–V–I</code> 四个和弦 → 间隔后播放目标单音 → 用户点级数按钮 → <code>answer()</code> 判定并写统计。
+</div>
+
+<h2>三、FET 方法 → 代码映射（1:1）</h2>
+<table>
+  <tr><th>FET 免费版概念</th><th>代码实现</th></tr>
+  <tr><td>调性锚定（I–IV–V–I）</td><td><code>cadenceChords(T)</code>：按大调/小调生成 4 个三和弦并依次播放</td></tr>
+  <tr><td>单音音级识别</td><td>目标音 = <code>T + targetOffset</code>；用户点 <code>CHROMA[idx]</code> 按钮；<code>answer()</code> 比较 <code>idx === targetOffset</code></td></tr>
+  <tr><td>大调 / 小调 模块</td><td><code>SCALES.major/minor.offsets</code> 决定自然音级集合与和弦质量</td></tr>
+  <tr><td>半音 Chromatics 模块</td><td><code>chromSwitch</code> 开启后答案集合扩为 12 个半音（含 Di/Me/Fi/Se/Te 等变化唱名）</td></tr>
+  <tr><td>转调不变性训练</td><td>每轮主音 <code>T = 55 + rand(13)</code>（G3–G4）随机，强制耳朵适应不同调</td></tr>
+  <tr><td>标签（唱名/级数/音名）</td><td><code>labelSeg</code> 切换 <code>labelFor()</code> 输出（可动 do 唱名 / 级数 / 绝对音名）</td></tr>
+  <tr><td>逐音反馈与弱项暴露</td><td>正确/错误高亮 + <code>renderStats()</code> 画逐级数正确率条</td></tr>
+</table>
+
+<h2>四、音色合成链路</h2>
+<ul>
+  <li><b>SF2 文件</b>：<code>soundfonts/GeneralUserGS.sf2</code>（31MB，RIFF/sfbk，S. Christian Collins，宽松许可可再分发）。</li>
+  <li><b>WASM 内核</b>：<code>js/externals/libfluidsynth-2.4.6.js</code> —— FluidSynth 的 Emscripten 编译版，<b>wasm 已 base64 内嵌</b>（330KB），无需额外下载。</li>
+  <li><b>JS 封装</b>：<code>js/dist/js-synthesizer.js</code> —— 暴露 <code>JSSynth</code> 全局，提供 <code>Synthesizer</code>、<code>waitForReady()</code>、<code>loadSFont()</code>、<code>midiNoteOn/Off</code>、<code>midiProgramChange</code>。</li>
+  <li><b>发声</b>：<code>synth.init(sampleRate)</code> → <code>createAudioNode(ctx, 8192)</code> → 连 <code>ctx.destination</code>；<code>midiProgramChange(0, p)</code> 选乐器；<code>midiNoteOn(0, midi, vel)</code> / <code>midiNoteOff</code> 触发与停止。</li>
+</ul>
+<div class="note">为什么不用 Web Audio 振荡器硬合成？FET 的价值在于“真实乐器音色下的功能听辨”。用真实 SF2 采样（钢琴）更贴近原版体验，也呼应上一轮“SF2 音色”的调研结论。若日后要切换吉他/弦乐，仅需改 <code>INSTRUMENTS</code> 的 GM program 号。</div>
+
+<h2>五、文件结构</h2>
+<pre>~/Desktop/fet-trainer/
+├── index.html                      # 训练界面（UI 层）
+├── js/
+│   ├── app.js                      # 训练逻辑 + 音频引擎（逻辑层）
+│   ├── externals/
+│   │   └── libfluidsynth-2.4.6.js  # FluidSynth WASM 内核（内嵌 wasm）
+│   └── dist/
+│       └── js-synthesizer.js       # SF2 合成封装
+├── soundfonts/
+│   └── GeneralUserGS.sf2           # 免费可商用 GM 音色
+└── docs/
+    └── architecture.html           # 本文档</pre>
+
+<h2>六、可扩展性（付费版功能如何叠加）</h2>
+<p>当前实现的是 <span class="free">免费版</span> 路径。FET <span class="pay">付费版（Plus）</span> 的功能可在现有架构上增量叠加，无需重做核心：</p>
+<table>
+  <tr><th>付费功能</th><th>叠加方式</th></tr>
+  <tr><td>Melodic Dictations（旋律听写）</td><td>新增序列生成器：把多个 <code>targetOffset</code> 串成旋律依次播放，用户输入唱名序列；复用 <code>playSequence</code> 与统计</td></tr>
+  <tr><td>Listener Mode（免动手聆听）</td><td>新增自动循环：<code>setInterval</code> 连续出题+自动播报答案，纯听觉浸润</td></tr>
+  <tr><td>Sound Plugins（更好音色）</td><td>把 <code>INSTRUMENTS</code> 指向更高质量的 SF2（如 FluidR3_GM / Arachno），并支持多 SF2 热切换</td></tr>
+  <tr><td>自定义练习</td><td>开放 <code>SCALES</code> / 答案集合 / 调域的配置 UI</td></tr>
+  <tr><td>进阶双音（音级+音程）</td><td>扩展 <code>playSequence</code> 顺序播放两音，新增音程判定维度</td></tr>
+</table>
+
+<h2>七、运行方式</h2>
+<pre># 在项目目录启动本地服务器（浏览器禁止 file:// 读取本地 SF2）
+cd ~/Desktop/fet-trainer
+python3 -m http.server 8000
+# 浏览器打开 http://localhost:8000 ，首次点击“播放”激活音频</pre>
+<div class="note">必须走本地服务器（而非直接双击 index.html），否则浏览器的同源策略会阻止 <code>fetch('./soundfonts/...sf2')</code>。引擎与音色均已本地化，运行时<b>无需联网</b>。</div>
+
+<h2>八、已知限制</h2>
+<ul>
+  <li>主线程 <code>ScriptProcessorNode</code> 渲染（js-synthesizer 主线程版）在极低配设备可能有轻微卡顿；如需更低延迟可改 <code>AudioWorklet</code> 版（已随库附带 <code>js-synthesizer.worklet.js</code>）。</li>
+  <li>免费版未实现“两音/音程”与“旋律听写”，见第六节扩展路径。</li>
+  <li>统计按“音阶×标签”分区，切换标签时正确率表会切换对应数据集。</li>
+</ul>
+
+<div class="footer">架构文档与可运行项目同源生成；SF2 版权归 S. Christian Collins（宽松许可），FluidSynth 为 LGPL，js-synthesizer 为 BSD-3-Clause。</div>
+
+</div>
+</body>
+</html>

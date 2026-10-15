@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音感练习</title>
+<style>
+  :root{
+    --bg:#f4f6f8;
+    --panel:#ffffff;
+    --fg:#1a2029;
+    --muted:#68727f;
+    --line:#e2e6ec;
+    --line-soft:#eef1f5;
+    --accent:#2f6f8f;
+    --accent-ink:#24536b;
+    --accent-wash:#eef5f8;
+    --good:#2f7a52;
+    --good-wash:#eaf5ef;
+    --bad:#b5433a;
+    --bad-wash:#fbeeed;
+    --warn:#8a6a2f;
+    --warn-wash:#fbf4e6;
+    --r-card:10px;
+    --r-ctl:7px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",Segoe UI,sans-serif;
+    background:var(--bg);color:var(--fg);line-height:1.6;font-size:15px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:32px 20px 72px}
+
+  header{padding-bottom:18px;border-bottom:1px solid var(--line)}
+  h1{font-size:22px;margin:0;letter-spacing:-.02em;font-weight:650}
+  .sub{margin:6px 0 0;color:var(--muted);font-size:13px;max-width:62ch}
+
+  /* Tab 导航：下划线式，与整体克制风格一致 */
+  .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-top:18px}
+  .tabs button{
+    border:none;background:none;padding:11px 16px;cursor:pointer;
+    color:var(--muted);font-family:inherit;font-size:14.5px;font-weight:500;
+    border-bottom:2px solid transparent;margin-bottom:-1px;
+    transition:color .12s ease,border-color .12s ease;
+  }
+  .tabs button:hover{color:var(--fg)}
+  .tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+  .tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:4px 4px 0 0}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-card);padding:20px 22px;margin:16px 0}
+  .panel > h2{
+    font-size:13px;margin:0 0 16px;color:var(--muted);
+    font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  }
+
+  .row{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center}
+  .row + .row{margin-top:12px}
+  .field{display:flex;flex-direction:column;gap:6px}
+  .field > .fl{font-size:12px;color:var(--muted);font-weight:500}
+
+  select,button{font-family:inherit;font-size:14px;color:var(--fg)}
+  select{
+    border:1px solid var(--line);border-radius:var(--r-ctl);
+    padding:7px 10px;background:#fff;cursor:pointer;
+  }
+  select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .btn{
+    border:1px solid var(--line);border-radius:var(--r-ctl);
+    padding:8px 15px;background:#fff;cursor:pointer;font-weight:500;
+    transition:transform .1s ease,background .12s ease,border-color .12s ease,color .12s ease;
+  }
+  .btn:hover{border-color:#c9d1da;background:#fafbfc}
+  .btn:active{transform:translateY(1px)}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn-primary:hover{background:var(--accent-ink);border-color:var(--accent-ink)}
+  .btn-lg{padding:11px 22px;font-size:15px}
+  .btn-danger{color:var(--bad);border-color:#e8cdc9}
+  .btn-danger:hover{background:var(--bad-wash);border-color:var(--bad)}
+
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r-ctl);overflow:hidden;background:#fff}
+  .seg button{
+    border:none;border-right:1px solid var(--line);border-radius:0;background:#fff;
+    padding:7px 14px;cursor:pointer;color:var(--muted);font-weight:500;
+    transition:background .12s ease,color .12s ease;
+  }
+  .seg button:last-child{border-right:none}
+  .seg button:hover{background:#f7f9fa}
+  .seg button.on{background:var(--accent);color:#fff}
+
+  .chips{display:flex;flex-wrap:wrap;gap:5px}
+  .chips button{
+    border:1px solid var(--line);border-radius:var(--r-ctl);background:#fff;
+    padding:6px 11px;cursor:pointer;color:var(--muted);
+    font-variant-numeric:tabular-nums;font-weight:500;
+    transition:background .12s ease,color .12s ease,border-color .12s ease;
+  }
+  .chips button:hover{border-color:#c9d1da;background:#fafbfc}
+  .chips button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  .switch{
+    width:40px;height:23px;border-radius:12px;background:#cfd6de;position:relative;
+    transition:background .16s ease;cursor:pointer;flex:none;
+  }
+  .switch i{position:absolute;top:3px;left:3px;width:17px;height:17px;border-radius:50%;background:#fff;transition:left .16s ease}
+  .switch.on{background:var(--accent)}
+  .switch.on i{left:20px}
+  .toggle{display:inline-flex;align-items:center;gap:9px;font-size:14px;cursor:pointer;user-select:none}
+
+  .trainhead{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:flex-end;justify-content:space-between}
+  .progress{display:flex;flex-direction:column;gap:7px;align-items:flex-end}
+  .pnum{font-size:26px;font-weight:650;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1}
+  .dots{display:flex;gap:4px}
+  .dots i{width:16px;height:3px;border-radius:2px;background:var(--line);transition:background .2s ease}
+  .dots i.done{background:var(--accent)}
+  .dots i.cur{background:var(--accent);opacity:.45}
+
+  .status{font-size:13px;color:var(--muted);margin-top:14px;min-height:18px}
+  .status.err{color:var(--bad)}
+
+  .feedback{font-size:16px;font-weight:500;min-height:44px;margin:16px 0 4px;padding:11px 14px;border-radius:var(--r-ctl);background:var(--line-soft)}
+  .feedback.good{color:var(--good);background:var(--good-wash)}
+  .feedback.bad{color:var(--bad);background:var(--bad-wash)}
+  .feedback.info{color:var(--accent-ink);background:var(--accent-wash)}
+
+  .degree-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:9px;margin-top:14px}
+  .deg{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    min-height:62px;padding:10px 6px;border:1px solid var(--line);border-radius:var(--r-ctl);
+    background:#fff;cursor:pointer;user-select:none;font-family:inherit;
+    transition:transform .1s ease,border-color .12s ease,background .12s ease;
+  }
+  .deg:hover{border-color:var(--accent);background:var(--accent-wash)}
+  .deg:active{transform:translateY(1px)}
+  .deg .sf{font-size:17px;font-weight:600}
+  .deg .meta{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .deg.playing{border-color:var(--accent);background:var(--accent-wash);box-shadow:inset 0 0 0 1px var(--accent)}
+  .deg.correct{border-color:var(--good);background:var(--good-wash)}
+  .deg.wrong{border-color:var(--bad);background:var(--bad-wash)}
+  .deg[disabled]{cursor:not-allowed;opacity:.5;transform:none}
+  .deg[disabled]:hover{border-color:var(--line);background:#fff}
+
+  /* 旋律听写：答题槽位 */
+  .slots{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+  .slot{
+    width:62px;height:62px;border:1px dashed var(--line);border-radius:var(--r-ctl);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+    background:#fff;transition:border-color .12s ease,background .12s ease;
+  }
+  .slot .n{font-size:17px;font-weight:600}
+  .slot .i{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .slot.filled{border-style:solid}
+  .slot.active{border-color:var(--accent);background:var(--accent-wash);border-style:solid}
+  .slot.ok{border-color:var(--good);background:var(--good-wash);border-style:solid}
+  .slot.no{border-color:var(--bad);background:var(--bad-wash);border-style:solid}
+  .slot.playing{box-shadow:inset 0 0 0 1px var(--accent);border-color:var(--accent)}
+
+  /* 聆听模式：大号状态显示 */
+  .stage{
+    border:1px solid var(--line);border-radius:var(--r-card);background:var(--line-soft);
+    padding:28px 22px;margin-top:16px;text-align:center;
+  }
+  .stage .phase{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600}
+  .stage .note{font-size:44px;font-weight:650;letter-spacing:-.02em;margin-top:8px;line-height:1.1}
+  .stage .note.dim{color:var(--muted)}
+  .stage .note.good{color:var(--good)}
+  .stage .meta{font-size:13px;color:var(--muted);margin-top:6px}
+  .counters{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+  .counters div{text-align:center}
+  .counters .k{font-size:12px;color:var(--muted)}
+  .counters .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+
+  .result{display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+  .pie{
+    width:148px;height:148px;border-radius:50%;flex:none;position:relative;
+    background:conic-gradient(var(--good) 0% 100%,var(--bad) 100% 100%);
+  }
+  .pie::after{content:"";position:absolute;inset:26px;background:var(--panel);border-radius:50%}
+  .pie b{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:25px;font-weight:650;letter-spacing:-.02em;z-index:1;font-variant-numeric:tabular-nums;
+  }
+  .stats-list{display:grid;grid-template-columns:auto auto;gap:9px 22px;align-items:baseline;font-size:14px}
+  .stats-list dt{color:var(--muted)}
+  .stats-list dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-top:2px}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend b{width:11px;height:11px;border-radius:3px;flex:none}
+
+  .hint{font-size:12.5px;color:var(--muted);margin-top:14px}
+  .kv{font-size:13px;color:var(--muted)}
+  .hidden{display:none !important}
+  .num{font-variant-numeric:tabular-nums}
+
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  th,td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--line-soft)}
+  th{color:var(--muted);font-weight:500;font-size:12px}
+  td.num{font-variant-numeric:tabular-nums}
+  .bar{height:5px;border-radius:3px;background:var(--line-soft);overflow:hidden;min-width:64px}
+  .bar > i{display:block;height:100%;background:var(--accent)}
+
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important}
+  }
+  @media (max-width:760px){
+    .trainhead{align-items:flex-start}
+    .progress{align-items:flex-start}
+    .slot{width:52px;height:52px}
+    .stage .note{font-size:34px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>音感练习</h1>
+    <p class="sub">三种练法各自独立。音级听辨打基础，旋律听写练记忆，聆听模式适合不看屏幕的时候。</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="练习模式">
+    <button type="button" role="tab" data-tab="ear" class="on" aria-selected="true">音级听辨</button>
+    <button type="button" role="tab" data-tab="dictation" aria-selected="false">旋律听写</button>
+    <button type="button" role="tab" data-tab="listener" aria-selected="false">聆听模式</button>
+  </nav>
+
+  <!-- 共享设置 -->
+  <div class="panel">
+    <h2>设置</h2>
+
+    <div class="row">
+      <div class="field">
+        <span class="fl">音阶</span>
+        <div class="seg" id="scaleSeg">
+          <button type="button" data-v="major" class="on">大调</button>
+          <button type="button" data-v="minor">小调</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="fl">标签</span>
+        <div class="seg" id="labelSeg">
+          <button type="button" data-v="solfege" class="on">唱名</button>
+          <button type="button" data-v="number">级数</button>
+          <button type="button" data-v="note">音名</button>
+        </div>
+      </div>
+      <div class="field">
+        <span class="fl">调性</span>
+        <div class="row" style="gap:8px">
+          <div class="seg" id="keyModeSeg">
+            <button type="button" data-v="random">随机</button>
+            <button type="button" data-v="fixed" class="on">固定</button>
+          </div>
+          <select id="keyRoot" aria-label="固定调性根音"></select>
+        </div>
+      </div>
+      <div class="field">
+        <span class="fl">半音模式</span>
+        <label class="toggle"><span class="switch" id="chromSwitch"><i></i></span>加入升降音</label>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field" style="flex:1;min-width:260px">
+        <span class="fl">难度（数字越大，要听的音越多）</span>
+        <div class="chips" id="difficultySeg"></div>
+        <span class="kv" id="diffHint"></span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <span class="fl">乐器</span>
+        <select id="instrument"></select>
+      </div>
+      <div class="field">
+        <span class="fl">节奏</span>
+        <select id="tempo">
+          <option value="1.15">慢</option>
+          <option value="1" selected>中</option>
+          <option value="0.8">快</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="fl">答对后回放速度</span>
+        <select id="interval">
+          <option value="250">快</option>
+          <option value="400" selected>中</option>
+          <option value="600">慢</option>
+          <option value="900">很慢</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="status" id="status">点击任意一个「开始」按钮即可激活音频。</div>
+  </div>
+
+  <!-- ============ Tab 1: 音级听辨 ============ -->
+  <div class="tabpanel" data-panel="ear">
+    <div class="panel">
+      <div class="trainhead">
+        <h2 style="margin:0">音级听辨 <span class="kv" id="keyInfo"></span></h2>
+        <div class="progress">
+          <span class="pnum" id="progressInfo">未开始</span>
+          <span class="dots" id="progressDots" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:16px">
+        <button type="button" class="btn btn-primary" id="playBtn">开始训练</button>
+        <button type="button" class="btn" id="replayBtn">重听本题（和弦 + 单音）</button>
+        <span class="kv" id="streakInfo"></span>
+      </div>
+
+      <div class="feedback" id="feedback">每组 10 题。答错不会换题，可以继续选到对为止；选对后会把这个难度里所有音从高到低播一遍，再自动出下一题。</div>
+
+      <div class="degree-grid" id="grid"></div>
+
+      <p class="hint">同一个音换到别的调子或高八度，听起来仍是同一个级数，这就是相对音高。</p>
+    </div>
+
+    <div class="panel hidden" id="summary">
+      <h2>本次成绩</h2>
+      <div class="result">
+        <div class="pie" id="pie"><b id="piePct">0%</b></div>
+        <div>
+          <dl class="stats-list">
+            <dt>首次答对</dt><dd id="statFirst">0</dd>
+            <dt>需重试</dt><dd id="statRetry">0</dd>
+            <dt>错误次数合计</dt><dd id="statWrong">0</dd>
+            <dt>正确率</dt><dd id="statPct">0%</dd>
+            <dt>本组难度</dt><dd id="statDiff" style="font-weight:500">-</dd>
+          </dl>
+          <div class="legend" style="margin-top:14px">
+            <span><b style="background:var(--good)"></b>首次答对</span>
+            <span><b style="background:var(--bad)"></b>需重试</span>
+          </div>
+        </div>
+      </div>
+      <p class="hint">成绩只显示在这次练习里，关掉页面就没了。</p>
+    </div>
+
+    <div class="panel">
+      <h2>逐级数正确率</h2>
+      <table id="statsTable">
+        <thead><tr><th>音级</th><th>正确率</th><th>对/总</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="row" style="margin-top:14px">
+        <button type="button" class="btn" id="resetStats">清空统计</button>
+        <span class="kv">按音阶、标签、难度分别累计，长期保存</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Tab 2: 旋律听写 ============ -->
+  <div class="tabpanel hidden" data-panel="dictation">
+    <div class="panel">
+      <div class="trainhead">
+        <h2 style="margin:0">旋律听写 <span class="kv" id="dictKeyInfo"></span></h2>
+        <div class="progress">
+          <span class="pnum" id="dictProgress">未开始</span>
+          <span class="dots" id="dictDots" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:16px">
+        <div class="field">
+          <span class="fl">每句长度</span>
+          <select id="dictLen">
+            <option value="3">3 个音</option>
+            <option value="4" selected>4 个音</option>
+            <option value="5">5 个音</option>
+            <option value="6">6 个音</option>
+            <option value="7">7 个音</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="fl">每句题数</span>
+          <select id="dictRounds">
+            <option value="5">5 句</option>
+            <option value="10" selected>10 句</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <button type="button" class="btn btn-primary" id="dictStart">开始听写</button>
+        <button type="button" class="btn" id="dictReplay">重听这句</button>
+        <button type="button" class="btn" id="dictHint">提示一个音</button>
+        <span class="kv" id="dictStreak"></span>
+      </div>
+
+      <div class="feedback" id="dictFeedback">先听一段旋律，再按顺序把它弹回来。听不清可以重听，写错可以继续改。</div>
+
+      <div class="slots" id="dictSlots"></div>
+
+      <div class="degree-grid" id="dictGrid"></div>
+
+      <p class="hint">旋律里的音都来自上面选的难度范围。听不出来时先想一想刚才的调子，再逐个音试。</p>
+    </div>
+
+    <div class="panel hidden" id="dictSummary">
+      <h2>本次成绩</h2>
+      <div class="result">
+        <div class="pie" id="dictPie"><b id="dictPiePct">0%</b></div>
+        <div>
+          <dl class="stats-list">
+            <dt>一次听对</dt><dd id="dictStatNotes">0</dd>
+            <dt>总音数</dt><dd id="dictStatTotal">0</dd>
+            <dt>用提示</dt><dd id="dictStatHint">0</dd>
+            <dt>正确率</dt><dd id="dictStatPct">0%</dd>
+            <dt>本组设置</dt><dd id="dictStatCfg" style="font-weight:500">-</dd>
+          </dl>
+          <div class="legend" style="margin-top:14px">
+            <span><b style="background:var(--good)"></b>一次听对</span>
+            <span><b style="background:var(--bad)"></b>改过或用提示</span>
+          </div>
+        </div>
+      </div>
+      <p class="hint">成绩只显示在这次练习里，关掉页面就没了。</p>
+    </div>
+  </div>
+
+  <!-- ============ Tab 3: 聆听模式 ============ -->
+  <div class="tabpanel hidden" data-panel="listener">
+    <div class="panel">
+      <div class="trainhead">
+        <h2 style="margin:0">聆听模式 <span class="kv" id="lisKeyInfo"></span></h2>
+        <div class="progress">
+          <span class="pnum" id="lisProgress">未开始</span>
+        </div>
+      </div>
+
+      <p class="kv" style="margin:14px 0 0;max-width:62ch">
+        每一轮会先播和弦定下调子，再播一个单音，然后告诉你它是第几级。你只要听，不用点屏幕，可以放着当背景音。
+      </p>
+
+      <div class="row" style="margin-top:16px">
+        <div class="field">
+          <span class="fl">每轮之间的停顿</span>
+          <select id="lisGap">
+            <option value="2000">2 秒</option>
+            <option value="3500" selected>3.5 秒</option>
+            <option value="5000">5 秒</option>
+            <option value="8000">8 秒</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="fl">单音重复次数</span>
+          <select id="lisRepeat">
+            <option value="1">1 次</option>
+            <option value="2" selected>2 次</option>
+            <option value="3">3 次</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px">
+        <button type="button" class="btn btn-primary btn-lg" id="lisStart">开始聆听</button>
+        <button type="button" class="btn btn-lg" id="lisStop" disabled>停止</button>
+        <label class="toggle"><span class="switch" id="lisKeepAwake"><i></i></span>保持屏幕常亮</label>
+      </div>
+
+      <div class="stage" id="lisStage">
+        <div class="phase" id="lisPhase">等待开始</div>
+        <div class="note dim" id="lisNote">按下开始</div>
+        <div class="meta" id="lisMeta">每轮 4 个和弦 + 1 个单音，答完自动进入下一轮</div>
+        <div class="counters">
+          <div><div class="k">已完成轮次</div><div class="v" id="lisCount">0</div></div>
+          <div><div class="k">当前轮次</div><div class="v" id="lisRound">0</div></div>
+        </div>
+      </div>
+
+      <p class="hint" id="lisHint">浏览器可能会在标签切换时暂停声音，播放期间请保持这个标签页在前台。</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/externals/libfluidsynth-2.4.6.js"></script>
+<script src="js/dist/js-synthesizer.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
