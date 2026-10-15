@@ -13,8 +13,8 @@
     { deg: '#4', sf: 'Fi' }, { deg: '5',  sf: 'Sol' }, { deg: 'b6', sf: 'Se' },
     { deg: '6',  sf: 'La' }, { deg: 'b7', sf: 'Te' }, { deg: '7',  sf: 'Ti' }
   ];
-  var ORDER_DIATONIC = [0, 2, 4, 5, 7, 9, 11, 1];
-  var ORDER_CHROMA   = [0, 2, 4, 5, 7, 9, 11, 1, 3, 6, 8, 10];
+  var ORDER_DIATONIC = [0, 2, 4, 5, 7, 9, 11];
+  var ORDER_CHROMA   = [0, 2, 4, 5, 7, 9, 11, 3, 6, 8, 10];
   var NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
   // ---------- 音频引擎 ----------
