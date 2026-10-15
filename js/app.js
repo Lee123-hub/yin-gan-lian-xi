@@ -1141,5 +1141,9 @@
     $('lisKeyInfo').textContent = keyInfoText();
     // 进入网页即自动准备声音（遮罩显示加载进度），完成后遮罩自动消失
     Audio.init();
+    // 注册 Service Worker：音色文件首次加载后永久缓存，刷新不再重新下载
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(function () {});
+    }
   });
 })();
