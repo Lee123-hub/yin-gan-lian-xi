@@ -207,11 +207,11 @@
       : ('调性随机 ' + SCALES[State.scale].name);
     return State.chromatics ? k + ' + 半音' : k;
   }
-  function labelFor(idx) {
+  function labelFor(idx, tonicOverride) {
     var c = CHROMA[idx];
     if (State.label === 'solfege') return c.sf;
     if (State.label === 'number') return c.deg;
-    var midi = State.tonic + idx;
+    var midi = (tonicOverride || State.tonic) + idx;
     return NOTE_NAMES[((midi % 12) + 12) % 12] + (Math.floor(midi / 12) - 1);
   }
   function $(id) { return document.getElementById(id); }
@@ -255,6 +255,7 @@
 
   // ============ Tab 1: 音级听辨 ============
   function renderGrid() {
+    renderPreviewBar();
     var grid = $('grid');
     grid.innerHTML = '';
     availableIndices().forEach(function (idx) {
@@ -268,7 +269,11 @@
       d.innerHTML = '<span class="sf"></span>' + (meta ? '<span class="meta"></span>' : '');
       d.querySelector('.sf').textContent = main;
       if (meta) d.querySelector('.meta').textContent = meta;
-      d.addEventListener('click', function () { answer(idx, d); });
+      d.addEventListener('click', function () {
+        // 答错的点击先试听该键的音；点对时不预览（降序回放马上会覆盖，避免同音重击）
+        if (!State.answered && !(State.running && idx === State.targetOffset)) previewNote(idx);
+        answer(idx, d);
+      });
       grid.appendChild(d);
     });
   }
@@ -455,6 +460,46 @@
     all[k][idx].total++;
     if (correct) all[k][idx].correct++;
     saveStats(all);
+  }
+
+  // 点击答案按钮时试听对应的音（答对后的降序回放期间不打断）
+  function previewNote(idx, tonicOverride) {
+    if (!Audio.ready) return null;
+    Audio.resume();
+    var midi = fitRange((tonicOverride || State.tonic) + idx);
+    var my = ++playToken;
+    runTimeline([{ at: 0, midis: [midi], dur: 620 * State.tempo, vel: 90 }], my);
+    return midi;
+  }
+
+  // 设置区试听条：点击发音用于听音练习，跟随调性/音阶/半音/难度/标签设置
+  function previewTonic() {
+    return State.fixedKey ? 60 + State.keyRoot : (State.tonic || 60);
+  }
+  function renderPreviewBar() {
+    var bar = $('previewBar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    var ton = previewTonic();
+    availableIndices().forEach(function (idx) {
+      var d = document.createElement('button');
+      d.type = 'button';
+      d.className = 'pnote';
+      d.dataset.idx = idx;
+      var c = CHROMA[idx];
+      var main = State.label === 'solfege' ? c.sf : (State.label === 'number' ? c.deg : labelFor(idx, ton));
+      var meta = State.label === 'solfege' ? c.deg : (State.label === 'number' ? c.sf : '');
+      d.innerHTML = '<span class="sf"></span>' + (meta ? '<span class="meta"></span>' : '');
+      d.querySelector('.sf').textContent = main;
+      if (meta) d.querySelector('.meta').textContent = meta;
+      d.addEventListener('click', function () {
+        var midi = previewNote(idx, ton);
+        if (midi === null) return;
+        d.classList.add('playing');
+        setTimeout(function () { d.classList.remove('playing'); }, 620 * State.tempo);
+      });
+      bar.appendChild(d);
+    });
   }
 
   function answer(idx, el) {
@@ -1035,6 +1080,7 @@
       $('keyInfo').textContent = keyInfoText();
       $('dictKeyInfo').textContent = keyInfoText();
       $('lisKeyInfo').textContent = keyInfoText();
+      renderPreviewBar();
       onSettingsChanged();
     });
 
@@ -1049,6 +1095,7 @@
       $('keyInfo').textContent = keyInfoText();
       $('dictKeyInfo').textContent = keyInfoText();
       $('lisKeyInfo').textContent = keyInfoText();
+      renderPreviewBar();
       onSettingsChanged();
     });
 

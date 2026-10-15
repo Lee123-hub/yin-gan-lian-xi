@@ -142,6 +142,10 @@
   .deg.wrong{border-color:var(--bad);background:var(--bad-wash)}
   .deg[disabled]{cursor:not-allowed;opacity:.5;transform:none}
   .deg[disabled]:hover{border-color:var(--line);background:#fff}
+  .pnote{min-width:58px;min-height:50px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;transition:border-color .15s ease,background .15s ease}
+  .pnote .sf{font-size:15px;font-weight:600}
+  .pnote .meta{font-size:10.5px;color:var(--muted)}
+  .pnote.playing{border-color:var(--accent);background:var(--accent-wash);box-shadow:inset 0 0 0 1px var(--accent)}
 
   /* 旋律听写：答题槽位 */
   .slots{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
@@ -287,6 +291,13 @@
         <span class="fl">难度（数字越大，要听的音越多）</span>
         <div class="chips" id="difficultySeg"></div>
         <span class="kv" id="diffHint"></span>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field" style="flex:1;min-width:260px">
+        <span class="fl">试听（点击发音，用于听音练习；自动跟随调性、音阶与难度设置）</span>
+        <div class="chips" id="previewBar"></div>
       </div>
     </div>
 
