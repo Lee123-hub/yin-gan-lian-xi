@@ -356,6 +356,15 @@
     playSequence();
   }
 
+  // 只重播当前题的目标单音，不重播定调和弦
+  function replayNoteOnly() {
+    if (!Audio.ready || !State.started) return;
+    Audio.resume();
+    var target = fitRange(State.tonic + State.targetOffset);
+    var my = ++playToken;
+    runTimeline([{ at: 0, midis: [target], dur: 950 * State.tempo, vel: 95 }], my);
+  }
+
   function playDescending(done) {
     var pool = availableIndices().slice().sort(function (a, b) { return b - a; });
     var gap = State.interval;
@@ -1066,6 +1075,7 @@
 
     $('playBtn').addEventListener('click', function () { if (!State.running) startSession(); });
     $('replayBtn').addEventListener('click', replayTarget);
+    $('replayNoteBtn').addEventListener('click', replayNoteOnly);
     $('resetStats').addEventListener('click', function () {
       var all = loadStats();
       delete all[statsKey()];
