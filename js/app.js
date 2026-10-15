@@ -34,9 +34,13 @@
   var Audio = {
     ctx: null, synth: null, ready: false, currentProgram: 0,
     init: function () {
+      // 幂等：页面加载即自动调用，后续各模式的 init 调用共享同一次加载
+      if (this._initPromise) return this._initPromise;
       var self = this;
+      var ov = document.getElementById('bootOverlay');
       var s = document.getElementById('status');
-      return new Promise(function (resolve, reject) {
+      if (ov) ov.classList.remove('hidden');
+      this._initPromise = new Promise(function (resolve, reject) {
         try {
           self.ctx = new (window.AudioContext || window.webkitAudioContext)();
         } catch (e) { reject(e); return; }
@@ -49,8 +53,7 @@
           self.synth.init(self.ctx.sampleRate);
           var node = self.synth.createAudioNode(self.ctx, 8192);
           node.connect(self.ctx.destination);
-          s.textContent = '正在准备声音...';
-          return fetch('./soundfonts/GeneralUserGS.sf2')
+          return fetch(SOUNDFONT_URL)
             .then(function (r) {
               if (!r.ok) throw new Error('SF2 加载失败 HTTP ' + r.status);
               return r.arrayBuffer();
@@ -59,11 +62,20 @@
             .then(function () {
               self.ready = true;
               self.setProgram(self.currentProgram);
-              s.textContent = '声音准备好了，可以开始。';
               resolve();
             });
         }).catch(function (e) { reject(e); });
       });
+      this._initPromise.then(function () {
+        if (ov) ov.classList.add('hidden');
+        s.textContent = '声音准备好了，可以直接开始。';
+      }).catch(function (e) {
+        if (ov) ov.classList.add('hidden');
+        self._initPromise = null;  // 允许下次点击重试
+        s.className = 'status err';
+        s.textContent = '声音初始化失败：' + e.message + '，点击「开始」可重试。';
+      });
+      return this._initPromise;
     },
     setProgram: function (p) {
       this.currentProgram = p;
@@ -87,6 +99,7 @@
   var seqTimer = null;
   var playToken = 0;
   var timelineBase = 0;   // 当前时间轴的起点时刻
+  var SOUNDFONT_URL = './soundfonts/GeneralUserGS-Trimmed.sf2';
 
   function buildEvents(list) {
     var evs = [];
@@ -1126,6 +1139,7 @@
     $('keyInfo').textContent = keyInfoText();
     $('dictKeyInfo').textContent = keyInfoText();
     $('lisKeyInfo').textContent = keyInfoText();
-    $('status').textContent = '点击任意一个「开始」按钮即可激活音频。';
+    // 进入网页即自动准备声音（遮罩显示加载进度），完成后遮罩自动消失
+    Audio.init();
   });
 })();

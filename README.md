@@ -32,7 +32,7 @@ python3 -m http.server 8000
 ## 技术栈
 
 - 纯 HTML/CSS/JavaScript，无框架、无构建步骤
-- 音源：GeneralUser GS（SF2 格式，免费可商用）
+- 音源：GeneralUser GS（SF2 格式，免费可商用），已用 `tools/trim_sf2.py` 裁剪为仅含本应用用到的乐器音色（29.8MB → 8.1MB，加载更快）
 - 合成引擎：js-synthesizer + FluidSynth WASM（全部本地内嵌，离线可用）
 
 ## 目录结构
@@ -43,7 +43,8 @@ yin-gan-lian-xi/
 ├── js/
 │   ├── app.js          # 状态机、调度与音频逻辑
 │   └── externals/      # FluidSynth WASM 与 js-synthesizer
-├── soundfonts/         # GeneralUser GS.sf2
+├── soundfonts/         # 裁剪版与完整版音色
+├── tools/trim_sf2.py   # SF2 裁剪脚本（按预置提取子集）
 ├── docs/               # 架构文档
 └── start.sh            # 一键启动脚本
 ```
