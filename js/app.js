@@ -639,22 +639,12 @@
   }
 
   function genMelody() {
+    // 允许相邻出现相同音符（真随机），音池至少 2 个音，长度必能填满
     var pool = availableIndices();
-    var len = Dict.len;
     var m = [];
-    // 候选池只有 1 个音时无法避免重复，直接按长度生成（不进入死循环）
-    if (pool.length === 1) {
-      for (var k = 0; k < len; k++) m.push(pool[0]);
-      return m;
+    for (var k = 0; k < Dict.len; k++) {
+      m.push(pool[Math.floor(Math.random() * pool.length)]);
     }
-    var guard = 0;
-    while (m.length < len && guard++ < len * 40) {
-      var idx = pool[Math.floor(Math.random() * pool.length)];
-      if (m.length > 0 && idx === m[m.length - 1]) continue; // 避免相邻重复
-      m.push(idx);
-    }
-    // 万一随机运气不好未填满，用最后一个音补齐，保证长度正确
-    while (m.length < len) m.push(m[m.length - 1] !== undefined ? m[m.length - 1] : pool[0]);
     return m;
   }
 
@@ -788,20 +778,13 @@
       renderDictSlots();
 
       if (Dict.pos >= Dict.melody.length) {
+        // 答对后不回放，稍作停顿直接进入下一句
         fb.className = 'feedback good';
         fb.textContent = '整句写对了。';
-        // 播放正确答案的旋律
-        var T = Dict.tonic;
-        var unit = 440 * State.tempo;
-        var tl = dictTimeline(T, unit);
-        var my = ++playToken;
-        runTimeline(tl.list.slice(tl.list.length - Dict.melody.length), my, function () {
-          if (my !== playToken) return;
-          setTimeout(function () {
-            if (Dict.round >= Dict.total) finishDict();
-            else nextDictRound();
-          }, 500);
-        });
+        setTimeout(function () {
+          if (Dict.round >= Dict.total) finishDict();
+          else nextDictRound();
+        }, 400);
       } else {
         fb.className = 'feedback info';
         fb.textContent = '第 ' + Dict.pos + ' 个对了，继续。';
