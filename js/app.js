@@ -17,19 +17,6 @@
   var ORDER_CHROMA   = [0, 2, 4, 5, 7, 9, 11, 1, 3, 6, 8, 10];
   var NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
-  var INSTRUMENTS = [
-    { name: '钢琴 (Acoustic Grand Piano)', p: 0 },
-    { name: '明亮钢琴 (Bright Piano)', p: 1 },
-    { name: '电钢琴 (Electric Piano 1)', p: 4 },
-    { name: '拨弦键琴 (Harpsichord)', p: 6 },
-    { name: '钢弦吉他 (Guitar Stee)', p: 25 },
-    { name: '爵士吉他 (Guitar Jazz)', p: 26 },
-    { name: '小提琴 (Violin)', p: 40 },
-    { name: '弦乐合奏 (Strings)', p: 48 },
-    { name: '人声合唱 (Choir Ahh)', p: 52 },
-    { name: '长笛 (Flute)', p: 73 }
-  ];
-
   // ---------- 音频引擎 ----------
   var Audio = {
     ctx: null, synth: null, ready: false, currentProgram: 0,
@@ -1077,12 +1064,6 @@
       onSettingsChanged();
     });
 
-    var sel = $('instrument');
-    INSTRUMENTS.forEach(function (ins, i) {
-      var o = document.createElement('option');
-      o.value = i; o.textContent = ins.name; sel.appendChild(o);
-    });
-    sel.addEventListener('change', function () { Audio.setProgram(INSTRUMENTS[+sel.value].p); });
     $('tempo').addEventListener('change', function (e) { State.tempo = +e.target.value; });
     $('interval').addEventListener('change', function (e) { State.interval = +e.target.value; });
 

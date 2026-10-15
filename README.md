@@ -32,7 +32,7 @@ python3 -m http.server 8000
 ## 技术栈
 
 - 纯 HTML/CSS/JavaScript，无框架、无构建步骤
-- 音源：GeneralUser GS（SF2 格式，免费可商用），已用 `tools/trim_sf2.py` 裁剪为仅含本应用用到的乐器音色（29.8MB → 8.1MB，加载更快）
+- 音源：GeneralUser GS（SF2 格式，免费可商用），已用 `tools/trim_sf2.py` 裁剪为仅含钢琴音色（29.8MB → 2.1MB，加载更快）
 - 合成引擎：js-synthesizer + FluidSynth WASM（全部本地内嵌，离线可用）
 
 ## 目录结构
