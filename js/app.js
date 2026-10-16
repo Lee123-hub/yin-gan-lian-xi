@@ -269,11 +269,7 @@
       d.innerHTML = '<span class="sf"></span>' + (meta ? '<span class="meta"></span>' : '');
       d.querySelector('.sf').textContent = main;
       if (meta) d.querySelector('.meta').textContent = meta;
-      d.addEventListener('click', function () {
-        // 答错的点击先试听该键的音；点对时不预览（降序回放马上会覆盖，避免同音重击）
-        if (!State.answered && !(State.running && idx === State.targetOffset)) previewNote(idx);
-        answer(idx, d);
-      });
+      d.addEventListener('click', function () { answer(idx, d); });
       grid.appendChild(d);
     });
   }
